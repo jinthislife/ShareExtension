@@ -9,6 +9,7 @@
 import UIKit
 import Social
 import MobileCoreServices
+import os.log
 
 class ShareViewController: UIViewController {
     override func viewDidLoad() {
@@ -18,50 +19,24 @@ class ShareViewController: UIViewController {
         self.view.backgroundColor = .systemGray6
         setupNavBar()
         setupViews()
-        
-        guard let items = extensionContext?.inputItems as? [NSExtensionItem] else { return }
+        getURL()
 
-        for item in items {
-            for itemProvider in item.attachments! {
-                
-                if itemProvider.hasItemConformingToTypeIdentifier(kUTTypeURL as String) {
-                    itemProvider.loadItem(forTypeIdentifier: kUTTypeURL as String) { (url, error) in
-                        if let url = url as? URL {
-                            print("url: \(url.absoluteString)")
-                            DispatchQueue.main.sync { [weak self] in
-                                self?.textField.text = url.absoluteString
-                            }
-                        }
-                    }
-                } else if itemProvider.hasItemConformingToTypeIdentifier(kUTTypePlainText as String) {
-                    itemProvider.loadItem(forTypeIdentifier: kUTTypePlainText as String) { (urlStr, error) in
-                        if let urlStr = urlStr as? String {
-                            print("url: \(urlStr)")
-                            DispatchQueue.main.sync { [weak self] in
-                                self?.textField.text = urlStr
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
     
     private func getURL() -> URL? {
-        var webUrlStr: URL?
+        var webURL: URL?
         guard let items = extensionContext?.inputItems as? [NSExtensionItem] else { return nil }
 
-        
-        //Uniform Type Identifier: kUTTypeURL, kUTTypePlainText
         for item in items {
             for itemProvider in item.attachments! {
                 
                 if itemProvider.hasItemConformingToTypeIdentifier(kUTTypeURL as String) {
                     itemProvider.loadItem(forTypeIdentifier: kUTTypeURL as String) { (url, error) in
                         if let url = url as? URL {
-                            print("url: \(url.absoluteString)")
-                            webUrlStr = url
+                            webURL = url
+                            
                             DispatchQueue.main.sync { [weak self] in
+                                os_log("kUTTypeURL: %s", log: OSLog.data, type: .info, webURL?.absoluteString ?? "")
                                 self?.textField.text = url.absoluteString
                             }
                         }
@@ -69,9 +44,10 @@ class ShareViewController: UIViewController {
                 } else if itemProvider.hasItemConformingToTypeIdentifier(kUTTypePlainText as String) {
                     itemProvider.loadItem(forTypeIdentifier: kUTTypePlainText as String) { (urlStr, error) in
                         if let urlStr = urlStr as? String {
-                            webUrlStr = URL(string: urlStr)
-                            print("url: \(urlStr)")
+                            webURL = URL(string: urlStr)
+
                             DispatchQueue.main.sync { [weak self] in
+                                os_log("kUTTypePlainText: %s", log: OSLog.data, type: .info, webURL?.absoluteString ?? "")
                                 self?.textField.text = urlStr
                             }
                         }
@@ -79,7 +55,8 @@ class ShareViewController: UIViewController {
                 }
             }
         }
-        return webUrlStr
+        
+        return webURL
     }
     
     private lazy var textField: UITextField = {
