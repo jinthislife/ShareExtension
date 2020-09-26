@@ -21,9 +21,20 @@ getImage: function() {
     }
     return "";
 },
+fetchFavicon: function() {
+        return Array.from(document.getElementsByTagName("link"))
+                .filter(element => element.rel == "icon" || element.rel == "shortcut icon")
+                .map(elem => elem.href)[0];
+},
 run: function(arguments) {
     // Pass the baseURI of the webpage to the extension.
-    arguments.completionFunction({"url": document.baseURI, "host": document.location.hostname, "title": document.title, "description": this.getDescription(), "image": this.getImage()});
+    arguments.completionFunction({"url": document.baseURI,
+        "host": document.location.hostname,
+        "title": document.title,
+        "description": this.getDescription(),
+        "image": this.getImage(),
+        "favicon": this.fetchFavicon()
+    });
 },
     // Note that the finalize function is only available in iOS.
 finalize: function(arguments) {
